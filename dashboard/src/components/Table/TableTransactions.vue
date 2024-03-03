@@ -16,7 +16,7 @@
       </el-table>
   
       <div>
-        <el-pagination layout="prev, pager, next" :total="total" :page-size="pageSize" v-model="currentPage" />
+        <el-pagination layout="prev, pager, next" :total="total" :page-size="pageSize" @current-change="updatePaginatedData" />
       </div>
     </div>
   </template>
@@ -34,10 +34,19 @@
   
     setup(props) {
       const total = ref(0);
-      const pageSize = ref(5);
+      const pageSize = ref(6);
       const currentPage = ref(1);
   
       const paginatedData = ref([]);
+
+      const updatePaginatedData = (newPage) => {
+        if(newPage > 0) {
+          currentPage.value = newPage
+        } 
+        const startIndex = (currentPage.value - 1) * pageSize.value;
+        const endIndex = startIndex + pageSize.value;
+        paginatedData.value = props.data.slice(startIndex, endIndex);
+      };
   
       const formatterData = (row) => {
         const dataObj = new Date(row.date);
@@ -53,18 +62,9 @@
         return formattedValue;
       };
   
-      const updatePaginatedData = () => {
-        const startIndex = (currentPage.value - 1) * pageSize.value;
-        const endIndex = startIndex + pageSize.value;
-        paginatedData.value = props.data.slice(startIndex, endIndex);
-      };
   
       onMounted(() => {
         total.value = props.data.length;
-        updatePaginatedData();
-      });
-  
-      watch(() => [currentPage.value, pageSize.value], () => {
         updatePaginatedData();
       });
   
@@ -72,9 +72,9 @@
         paginatedData,
         formatterData,
         formatterValue,
-        currentPage,
         pageSize,
         total,
+        updatePaginatedData
       };
     },
   };
