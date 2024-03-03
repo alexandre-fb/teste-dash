@@ -46,7 +46,7 @@ export default {
 
     const formatDateLabels = (dataString) => {
       const dateObj = new Date(dataString);
-      const day = dateObj.getDate();
+      const day = String(dateObj.getDate()).padStart(2, '0');
       const mon = dateObj.toLocaleDateString('pt-BR', { month: 'short' });
       return `${day} ${mon}`;
     }
@@ -62,21 +62,18 @@ export default {
       tooltip: {
         trigger: 'axis',
         formatter: function (params) {
-          const date = params[0].axisValue;
+          const index = params[0].dataIndex;
           const value = params[0].data;
           
-          const dataObj = new Date(date);
-          const options = { day: 'numeric', month: 'long', year: 'numeric' };
-
-          const formattedDate = dataObj.toLocaleDateString('pt-BR', options);
-          const formattedValue = `${value} mi`;
+          const formattedDate = formatedDateTooltip.value[index]
+          const formattedValue = `R$ ${value}mi`;
 
           return `
             <div class="tooltip-line-chart-wrapper">
               <p class="date">${formattedDate}</p> 
               <div class="value-wrapper">
                 <span style="width: 10px; height: 10px; border-radius: 100%; background-color: #1C64F2;"></span>
-                <p style="font-weight: bold;">R$ ${formattedValue}</p>
+                <p style="font-weight: bold;">${formattedValue}</p>
               </div>
             </div>
           `;
