@@ -1,6 +1,13 @@
 <template>
-  <h1>
-    Home
+  <div>
+    <h1>
+      Home
+    </h1>
+
+    <div v-if="transactionsData && !loading">
+      <TableTransactions :data="transactionsData" />
+    </div>
+
     <div v-if="equityHistoryData && !loading">
       <DashLineChart :data="equityHistoryData" />
     </div>
@@ -12,7 +19,8 @@
     <div v-if="equityByBrokerData && !loading">
       <DashEquityHorizontalBar :data="equityByBrokerData" />
     </div>
-  </h1>
+  </div>
+
 </template>
 
 <script>
@@ -22,21 +30,24 @@ import DashHorizontalBar from '../../components/Charts/DashHorizontalBar.vue';
 import { api } from '../../services/api'
 import DashEquityHorizontalBar from '../../components/Charts/DashEquityHorizontalBar.vue';
 import DashPortfolioHorizontalBar from '../../components/Charts/DashPortfolioHorizontalBar.vue';
+import TableTransactions from '../../components/Table/TableTransactions.vue';
 
 export default {
   components: {
     DashLineChart,
     DashHorizontalBar,
     DashEquityHorizontalBar,
-    DashPortfolioHorizontalBar
+    DashPortfolioHorizontalBar,
+    TableTransactions,
   },
   setup() {
     const dashData = ref({})
     const loading = ref(false)
     const equityHistoryData = ref([])
-    const clients_summary = ref([])
+    const clientsSummary = ref([])
     const portfolioByBrokersData = ref([])
     const equityByBrokerData = ref([])
+    const transactionsData = ref([])
 
     onMounted(() => {
       getData()
@@ -48,14 +59,16 @@ export default {
         const response = await api.get('/d4a79840-93c0-4297-80bb-108c279377a3')
 
         dashData.value = response.data.data.clients_summary
+
         equityHistoryData.value = formatEquityHistoryData(response.data.data.advisor_summary.equity_history)
-        clients_summary.value = response.data.data.clients_summary
+        clientsSummary.value = response.data.data.clients_summary
 
-        portfolioByBrokersData.value = formatchartsBrokersData(clients_summary.value, 'portfolio')
-        equityByBrokerData.value = formatchartsBrokersData(clients_summary.value, 'equity')
+        // bar chart
+        portfolioByBrokersData.value = formatchartsBrokersData(clientsSummary.value, 'portfolio')
+        equityByBrokerData.value = formatchartsBrokersData(clientsSummary.value, 'equity')
 
-        console.log('portfolioByBrokersData.value', portfolioByBrokersData.value)
-        console.log('equityByBrokerData.value', equityByBrokerData.value)
+        // table
+        transactionsData.value = formatTableTransactionsData(clientsSummary.value)
 
       } catch (error) {
         console.log('error', error)
@@ -114,11 +127,33 @@ export default {
       }
     }
 
+    const formatTableTransactionsData = (clients_summary) => {
+      console.log('clients_summary', clients_summary)
+
+      let allTransitions = []
+
+      clients_summary.forEach((client => {
+        client.latest_transactions.forEach(transaction => {
+          allTransitions.push({
+            name: client.name,
+            date: transaction.date,
+            value: transaction.value,
+            type: transaction.type
+          })
+        })
+      }))
+
+      allTransitions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      return allTransitions
+    }
+
     return {
       dashData,
       equityHistoryData,
       equityByBrokerData,
       portfolioByBrokersData,
+      transactionsData,
       loading
     };
   },
