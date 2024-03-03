@@ -5,11 +5,12 @@
       <DashLineChart :data="equityHistoryData" />
     </div>
 
-    <div v-if="equityHistoryData && !loading">
-      <DashHorizontalBar :data="equityHistoryData" />
+    <div v-if="portfolioByBrokersData && !loading">
+      <DashPortfolioHorizontalBar :data="portfolioByBrokersData" />
     </div>
-    <div v-if="equityHistoryData && !loading">
-      <DashHorizontalBar :data="equityHistoryData" />
+
+    <div v-if="equityByBrokerData && !loading">
+      <DashEquityHorizontalBar :data="equityByBrokerData" />
     </div>
   </h1>
 </template>
@@ -19,11 +20,15 @@ import { onMounted, ref } from 'vue';
 import DashLineChart from '../../components/Charts/DashLineChart.vue';
 import DashHorizontalBar from '../../components/Charts/DashHorizontalBar.vue';
 import { api } from '../../services/api'
+import DashEquityHorizontalBar from '../../components/Charts/DashEquityHorizontalBar.vue';
+import DashPortfolioHorizontalBar from '../../components/Charts/DashPortfolioHorizontalBar.vue';
 
 export default {
   components: {
     DashLineChart,
-    DashHorizontalBar
+    DashHorizontalBar,
+    DashEquityHorizontalBar,
+    DashPortfolioHorizontalBar
   },
   setup() {
     const dashData = ref({})
@@ -31,7 +36,7 @@ export default {
     const equityHistoryData = ref([])
     const clients_summary = ref([])
     const portfolioByBrokersData = ref([])
-    const equityByBroker = ref([])
+    const equityByBrokerData = ref([])
 
     onMounted(() => {
       getData()
@@ -47,10 +52,10 @@ export default {
         clients_summary.value = response.data.data.clients_summary
 
         portfolioByBrokersData.value = formatchartsBrokersData(clients_summary.value, 'portfolio')
-        equityByBroker.value = formatchartsBrokersData(clients_summary.value, 'equity')
+        equityByBrokerData.value = formatchartsBrokersData(clients_summary.value, 'equity')
 
         console.log('portfolioByBrokersData.value', portfolioByBrokersData.value)
-        console.log('equityByBroker.value', equityByBroker.value)
+        console.log('equityByBrokerData.value', equityByBrokerData.value)
 
       } catch (error) {
         console.log('error', error)
@@ -79,18 +84,11 @@ export default {
 
       if (chart === 'portfolio') {
         return {
-          labels: ['C.A', 'C.B', 'C.C'],
-          values: [brokerA.length, brokerB.length, brokerC.length]
-        }
-      }
-
-      if (chart === 'equity') {
-        return {
-          labels: ['C.A', 'C.B', 'C.C'],
+          labels: ['C.C', 'C.B', 'C.A'],
           values: [
-            sumTransactions(brokerA),
-            sumTransactions(brokerB),
-            sumTransactions(brokerC),
+            brokerC.length,
+            brokerB.length,
+            brokerA.length,
           ]
         }
       }
@@ -101,13 +99,26 @@ export default {
           return totalClient + sumTransactions;
         }, 0);
 
-        return sumBroker
+        return Number((sumBroker / 1e6).toFixed(2));
+      }
+
+      if (chart === 'equity') {
+        return {
+          labels: ['C.C', 'C.B', 'C.A'],
+          values: [
+            sumTransactions(brokerC),
+            sumTransactions(brokerB),
+            sumTransactions(brokerA),
+          ]
+        }
       }
     }
 
     return {
       dashData,
       equityHistoryData,
+      equityByBrokerData,
+      portfolioByBrokersData,
       loading
     };
   },
